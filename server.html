@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width">
+    <title>BUZZ - Server</title>
+    <script src="https://cdn.jsdelivr.net/npm/serverdate@3.1.0/lib/ServerDate.min.js"></script>
+</head>
+
+<body>
+    <button id="sblocca">SBLOCCA</button><br>
+    Vincitore: <input type="text" disabled id="vincitore" />
+    <div id="stop">STOP</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.2.0/dist/peerjs.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+
+            var messages = [];
+            var prefix = "robBi30SalLe-"
+            var masterId = prefix + "master7428084";
+            var lastPeerId = null;
+            var peer = null; // Own peer object
+            var peerId = null;
+            var sblocca = document.getElementById("sblocca");
+            var stop = document.getElementById("stop");
+            var vincitore = document.getElementById("vincitore");
+
+            var currentStatus = 2;
+            /*
+                0: ready
+                1: collecting
+                2: wait
+            */
+
+            /**
+             * Create the Peer object for our end of the connection.
+             *
+             * Sets up callbacks that handle any events related to our
+             * peer object.
+             */
+            function initialize() {
+                // Create own peer object with connection to shared PeerJS server
+                peer = new Peer(masterId, {
+                    debug: 2
+                });
+
+                peer.on('open', function (id) {
+                    // Workaround for peer.reconnect deleting previous id
+                    if (peer.id === null) {
+                        console.log('Received null id from peer open');
+                        peer.id = lastPeerId;
+                    } else {
+                        lastPeerId = peer.id;
+                    }
+
+                    console.log('ID: ' + peer.id);
+
+                });
+                peer.on('connection', function (c) {
+                    c.on('data', function (data) {
+                        if (currentStatus == 0) {
+                            messages = [];
+                            currentStatus = 1;
+                            stop.style.display = "block";
+                            setTimeout(function() {
+                                currentStatus = 2;
+                                sblocca.disabled = false;
+                                var winner = null;
+                                for (var i=0; i<messages.length; i++) {
+                                    if (winner == null || messages[i].tick < winner.tick) {
+                                        winner = messages[i];
+                                    }
+                                }
+                                vincitore.value = winner.id;
+                            }, 2000);
+                        }
+                        if (currentStatus == 0 || currentStatus == 1) {
+                            messages.push({
+                                id: c.peer.replace(prefix, ""),
+                                tick: new Date(data)
+                            });
+                        }
+                    });
+                });
+                peer.on('disconnected', function () {
+                    status.innerHTML = "Connection lost. Please reconnect";
+                    console.log('Connection lost. Please reconnect');
+
+                    // Workaround for peer.reconnect deleting previous id
+                    peer.id = lastPeerId;
+                    peer._lastServerId = lastPeerId;
+                    peer.reconnect();
+                });
+                peer.on('close', function () {
+                    conn = null;
+                    status.innerHTML = "Connection destroyed. Please refresh";
+                    console.log('Connection destroyed');
+                });
+                peer.on('error', function (err) {
+                    console.log(err);
+                });
+            };
+
+            sblocca.addEventListener('click', function () {
+                currentStatus = 0;
+                stop.style.display = "none";
+                sblocca.disabled = true;
+                vincitore.value = "";
+            });
+
+            alert(ServerDate.now() - Date.now());
+
+            initialize();
+
+        })();
+    </script>
+</body>
+
+</html>
