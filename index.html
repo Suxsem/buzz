@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0; user-scalable=0">
     <title>BUZZ</title>
+    <script src="NoSleep.min.js"></script>
     <script src="ServerDate.min.js"></script>
 </head>
 
@@ -44,6 +45,7 @@
             var reconnecting = document.getElementById("reconnecting");
             var connectingServer = false;
             var connectingPeer = false;
+            var noSleep = null;
 
             /**
              * Create the Peer object for our end of the connection.
@@ -212,7 +214,11 @@
             });
 
             // Start peer connection on click
-            connectButton.addEventListener('click', initialize);
+            connectButton.addEventListener('click', function() {
+                noSleep = new NoSleep();
+                noSleep.enable();
+                initialize();
+            });
 
             myId.addEventListener('keyup', function (e) {
                 connectButton.disabled = myId.value == "";
