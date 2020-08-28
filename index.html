@@ -14,6 +14,16 @@
     <div id="intro" style="text-align: center;">
         <input type="text" id="myId" placeholder="Come ti chiami?" autofocus="true"
             style="font-size: x-large; box-sizing: border-box; width: 100%; height: 50px; margin-top: 50px" /><br>
+        <select id="tavolo" style="font-size: x-large; box-sizing: border-box; width: 100%; height: 50px; margin-top: 10px">
+            <option value="" disabled selected>Scegli il tavolo</option>
+            <option value="Giove">Giove</option>
+            <option value="Marte">Marte</option>
+            <option value="Mercurio">Mercurio</option>
+            <option value="Nettuno">Nettuno</option>
+            <option value="Saturno">Saturno</option>
+            <option value="Urano">Urano</option>
+            <option value="Venere">Venere</option>
+        </select>
         <button id="connect-button" disabled="disabled"
             style="font-size: 5em; box-sizing: border-box; width: 100%; margin-top: 20px">VAI</button>
         <div style="color:burlywood; margin-top: 50px; font-size: x-small;">made by Suxsem</div>
@@ -39,6 +49,7 @@
             var conn = null;
             var message = document.getElementById("message");
             var myId = document.getElementById("myId");
+            var tavolo = document.getElementById("tavolo");
             var sendButton = document.getElementById("sendButton");
             var testButton = document.getElementById("testButton");
             var connectButton = document.getElementById("connect-button");
@@ -61,7 +72,7 @@
                 intro.style.display = "none";
                 reconnecting.style.display = "block";
 
-                peer = new Peer(prefix + myId.value, {
+                peer = new Peer(prefix + tavolo.options[tavolo.selectedIndex].value + "-" + myId.value, {
                     debug: 2
                 });
 
@@ -234,7 +245,11 @@
             });
 
             myId.addEventListener('keyup', function (e) {
-                connectButton.disabled = myId.value == "";
+                connectButton.disabled = myId.value == "" || tavolo.options[tavolo.selectedIndex].value == "";
+            });
+
+            tavolo.addEventListener('change', function (e) {
+                connectButton.disabled = myId.value == "" || tavolo.options[tavolo.selectedIndex].value == "";
             });
 
             ServerDate.now();

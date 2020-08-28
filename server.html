@@ -8,9 +8,13 @@
 </head>
 
 <body>
-    <div id="stop" style="width:100%; background-color: red; padding: 20px;box-sizing: border-box; margin-bottom:30px; text-align: center; font-size: 4em;">STOP</div>
-    <button type="button" id="vinto" style="background-color: green; font-size: 4em; box-sizing: border-box; width: 100%; margin-top: 5px; height: 100px">VINTO</button>
-    <button type="button" id="perso" style="font-size: 4em; box-sizing: border-box; width: 100%; margin-top: 5px; height: 100px">PERSO</button>
+    <div id="stop"
+        style="width:100%; background-color: red; padding: 20px;box-sizing: border-box; margin-bottom:30px; text-align: center; font-size: 4em;">
+        STOP</div>
+    <button type="button" id="vinto"
+        style="background-color: green; font-size: 4em; box-sizing: border-box; width: 100%; margin-top: 5px; height: 100px">VINTO</button>
+    <button type="button" id="perso"
+        style="font-size: 4em; box-sizing: border-box; width: 100%; margin-top: 5px; height: 100px">PERSO</button>
 
     <div style="font-size:3em; margin-top:20px">Vincitore</div>
     <input type="text" disabled id="vincitore" style="font-size:3em; width:100%;box-sizing: border-box" />
@@ -18,156 +22,183 @@
     <div style="margin-top: 20px; margin-bottom: 20px;" id="outputGrid"></div>
     Alfabetico: <input type="checkbox" id="sort""/>
 
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.2.0/dist/peerjs.min.js"></script>
+    <script src=" https://cdn.jsdelivr.net/npm/peerjs@1.2.0/dist/peerjs.min.js"></script>
     <script type="text/javascript">
-            var messages = [];
-            var prefix = "robBi30SalLe-"
-            var masterId = prefix + "master7428084";
-            var lastPeerId = null;
-            var peer = null; // Own peer object
-            var peerId = null;
-            var vinto = document.getElementById("vinto");
-            var perso = document.getElementById("perso");
-            var stop = document.getElementById("stop");
-            var vincitore = document.getElementById("vincitore");
-            var outputGrid = document.getElementById("outputGrid");
-            var sort = document.getElementById("sort");
+        var messages = [];
+        var prefix = "robBi30SalLe-"
+        var masterId = prefix + "master7428084";
+        var lastPeerId = null;
+        var peer = null; // Own peer object
+        var peerId = null;
+        var vinto = document.getElementById("vinto");
+        var perso = document.getElementById("perso");
+        var stop = document.getElementById("stop");
+        var vincitore = document.getElementById("vincitore");
+        var outputGrid = document.getElementById("outputGrid");
+        var sort = document.getElementById("sort");
 
-            var grid = {};
-            
+        var grid = {};
 
-            var currentStatus = 2;
-            /*
-                0: ready
-                1: collecting
-                2: wait
-            */
 
-            /**
-             * Create the Peer object for our end of the connection.
-             *
-             * Sets up callbacks that handle any events related to our
-             * peer object.
-             */
-            function initialize() {
-                // Create own peer object with connection to shared PeerJS server
-                peer = new Peer(masterId, {
-                    debug: 2
-                });
+        var currentStatus = 2;
+        /*
+            0: ready
+            1: collecting
+            2: wait
+        */
 
-                peer.on('open', function (id) {
-                    // Workaround for peer.reconnect deleting previous id
-                    if (peer.id === null) {
-                        console.log('Received null id from peer open');
-                        peer.id = lastPeerId;
-                    } else {
-                        lastPeerId = peer.id;
-                    }
+        /**
+         * Create the Peer object for our end of the connection.
+         *
+         * Sets up callbacks that handle any events related to our
+         * peer object.
+         */
+        function initialize() {
+            // Create own peer object with connection to shared PeerJS server
+            peer = new Peer(masterId, {
+                debug: 2
+            });
 
-                    console.log('ID: ' + peer.id);
-
-                });
-                peer.on('connection', function (c) {
-                    c.on('data', function (data) {
-                        if (data == "test") {
-                            c.send("testok");
-                            return;
-                        }
-                        if (currentStatus == 0) {
-                            messages = [];
-                            currentStatus = 1;
-                            stop.style.visibility = "visible";
-                            setTimeout(function() {
-                                currentStatus = 2;
-                                vinto.disabled = false;
-                                perso.disabled = false;
-                                var winner = null;
-                                for (var i=0; i<messages.length; i++) {
-                                    if (winner == null || messages[i].tick < winner.tick) {
-                                        winner = messages[i];
-                                    }
-                                }
-                                vincitore.value = winner.id;
-                            }, 2000);
-                        }
-                        if (currentStatus == 0 || currentStatus == 1) {
-                            messages.push({
-                                id: c.peer.replace(prefix, ""),
-                                tick: new Date(data)
-                            });
-                        }
-                    });
-                });
-                peer.on('disconnected', function () {
-                    status.innerHTML = "Connection lost. Please reconnect";
-                    console.log('Connection lost. Please reconnect');
-
-                    // Workaround for peer.reconnect deleting previous id
+            peer.on('open', function (id) {
+                // Workaround for peer.reconnect deleting previous id
+                if (peer.id === null) {
+                    console.log('Received null id from peer open');
                     peer.id = lastPeerId;
-                    peer._lastServerId = lastPeerId;
-                    peer.reconnect();
-                });
-                peer.on('close', function () {
-                    conn = null;
-                    status.innerHTML = "Connection destroyed. Please refresh";
-                    console.log('Connection destroyed');
-                });
-                peer.on('error', function (err) {
-                    console.log(err);
-                });
-            };
-
-            vinto.addEventListener('click', function () {
-                currentStatus = 0;
-                stop.style.visibility = "hidden";
-                vinto.disabled = true;
-                perso.disabled = true;
-                addPoint(vincitore.value);
-                vincitore.value = "";
-            });
-            perso.addEventListener('click', function () {
-                currentStatus = 0;
-                stop.style.visibility = "hidden";
-                vinto.disabled = true;
-                perso.disabled = true;
-                vincitore.value = "";
-            });
-            sort.addEventListener('change', function() {
-                renderGrid();
-            });
-
-
-            function addPoint(id) {                
-                addRemovePoint(id, 1);
-            }
-            function removePoint(id) {
-                addRemovePoint(id, -1);
-            }
-
-            function addRemovePoint(id, add) {
-                if (grid.hasOwnProperty(id)) {
-                    grid[id] += add;
                 } else {
-                    grid[id] = add;
+                    lastPeerId = peer.id;
                 }
-                renderGrid();
-            }
 
-            function renderGrid() {
-                var sortFlag = sort.checked;
-                var keysSorted = sortFlag ? Object.keys(grid).sort() : Object.keys(grid).sort(function(a,b){return grid[b]-grid[a]});
-                var htmlOutput = "<table>";
-                for (var i=0; i<keysSorted.length; i++) {
-                    var key = keysSorted[i];
-                    htmlOutput += "<tr><td>" + key + "</td><td>" + grid[key] + "</td><td><button onclick='removePoint(\"" + key + "\")'>-1</button></td><td><button onclick='addPoint(\"" + key + "\")'>+1</button></td></tr>";
-                      
-                }
-                htmlOutput += "</table>";
-                outputGrid.innerHTML = htmlOutput;
-            }
+                console.log('ID: ' + peer.id);
 
+            });
+            peer.on('connection', function (c) {
+                c.on('data', function (data) {
+                    if (data == "test") {
+                        c.send("testok");
+                        return;
+                    }
+                    if (currentStatus == 0) {
+                        messages = [];
+                        currentStatus = 1;
+                        stop.style.visibility = "visible";
+                        setTimeout(function () {
+                            currentStatus = 2;
+                            vinto.disabled = false;
+                            perso.disabled = false;
+                            var winner = null;
+                            for (var i = 0; i < messages.length; i++) {
+                                if (winner == null || messages[i].tick < winner.tick) {
+                                    winner = messages[i];
+                                }
+                            }
+                            vincitore.value = winner.id;
+                        }, 2000);
+                    }
+                    if (currentStatus == 0 || currentStatus == 1) {
+                        messages.push({
+                            id: c.peer.replace(prefix, ""),
+                            tick: new Date(data)
+                        });
+                    }
+                });
+            });
+            peer.on('disconnected', function () {
+                status.innerHTML = "Connection lost. Please reconnect";
+                console.log('Connection lost. Please reconnect');
+
+                // Workaround for peer.reconnect deleting previous id
+                peer.id = lastPeerId;
+                peer._lastServerId = lastPeerId;
+                peer.reconnect();
+            });
+            peer.on('close', function () {
+                conn = null;
+                status.innerHTML = "Connection destroyed. Please refresh";
+                console.log('Connection destroyed');
+            });
+            peer.on('error', function (err) {
+                console.log(err);
+            });
+        };
+
+        vinto.addEventListener('click', function () {
+            currentStatus = 0;
+            stop.style.visibility = "hidden";
+            vinto.disabled = true;
+            perso.disabled = true;
+            addPoint(vincitore.value);
+            vincitore.value = "";
+        });
+        perso.addEventListener('click', function () {
+            currentStatus = 0;
+            stop.style.visibility = "hidden";
+            vinto.disabled = true;
+            perso.disabled = true;
+            vincitore.value = "";
+        });
+        sort.addEventListener('change', function () {
             renderGrid();
-            initialize();
+        });
+
+
+        function addPoint(id) {
+            addRemovePoint(id, 1);
+        }
+        function removePoint(id) {
+            addRemovePoint(id, -1);
+        }
+
+        function addRemovePoint(id, add) {
+            if (grid.hasOwnProperty(id)) {
+                grid[id] += add;
+            } else {
+                grid[id] = add;
+            }
+            renderGrid();
+        }
+
+        function renderGrid() {
+            //pessime prestazioni, da rivedere
+            
+            var tavoli = Object.keys(grid).map(id => id.split("-")[0]);
+            tavoli = tavoli.filter(function (item, pos, self) {
+                return self.indexOf(item) == pos;
+            })
+
+            var sortFlag = sort.checked;
+
+            var tavoliGrid = {};
+            for (var j=0; j<tavoli.length; j++) {
+                tavoliGrid[tavoli[j]] = 0;
+            }
+            var keys = Object.keys(grid);
+            for (var j=0; j<keys.length; j++) {
+                tavoliGrid[keys[j].split("-")[0]] += grid[keys[j]];
+            }
+
+            var tavoliGridKeySorted = sortFlag ? Object.keys(tavoliGrid).sort() : Object.keys(tavoliGrid).sort(function (a, b) { return tavoliGrid[b] - tavoliGrid[a] });
+            var keysSorted = sortFlag ? Object.keys(grid).sort() : Object.keys(grid).sort(function (a, b) { return grid[b] - grid[a] });
+
+            var htmlOutput = "<table>";
+            for (var j=0; j<tavoliGridKeySorted.length; j++) {
+                htmlOutput += "<tr><td><b>" + tavoliGridKeySorted[j] + "</b></td><td>" + tavoliGrid[tavoliGridKeySorted[j]] + "</td><td></td><td></td></tr>";                
+
+                var keysSortedFiltered = keysSorted.filter(key => key.startsWith(tavoliGridKeySorted[j]));
+                for (var i = 0; i < keysSortedFiltered.length; i++) {
+                    var key = keysSortedFiltered[i];
+                    htmlOutput += "<tr><td>" + key.replace(tavoliGridKeySorted[j] + "-", "") + "</td><td>" + grid[key] + "</td><td><button onclick='removePoint(\"" + key + "\")'>-1</button></td><td><button onclick='addPoint(\"" + key + "\")'>+1</button></td></tr>";
+                }
+            }
+            htmlOutput += "</table>";
+            outputGrid.innerHTML = htmlOutput;
+        }
+
+        renderGrid();
+        initialize();
+
+        addPoint("Saturno-Stefano");
+        addPoint("Saturno-Stefano");
+        addPoint("Mercurio-Stefano");
 
     </script>
 </body>
