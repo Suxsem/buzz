@@ -8,23 +8,33 @@
 </head>
 
 <body>
-    <button id="sblocca">SBLOCCA</button><br>
-    Vincitore: <input type="text" disabled id="vincitore" />
-    <div id="stop">STOP</div>
+    <div id="stop" style="width:100%; background-color: red; padding: 20px;box-sizing: border-box; margin-bottom:30px; text-align: center; font-size: 4em;">STOP</div>
+    <button type="button" id="vinto" style="background-color: green; font-size: 4em; box-sizing: border-box; width: 100%; margin-top: 5px; height: 100px">VINTO</button>
+    <button type="button" id="perso" style="font-size: 4em; box-sizing: border-box; width: 100%; margin-top: 5px; height: 100px">PERSO</button>
+
+    <div style="font-size:3em; margin-top:20px">Vincitore</div>
+    <input type="text" disabled id="vincitore" style="font-size:3em; width:100%;box-sizing: border-box" />
+
+    <div style="margin-top: 20px; margin-bottom: 20px;" id="outputGrid"></div>
+    Alfabetico: <input type="checkbox" id="sort""/>
 
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.2.0/dist/peerjs.min.js"></script>
     <script type="text/javascript">
-        (function () {
-
             var messages = [];
             var prefix = "robBi30SalLe-"
             var masterId = prefix + "master7428084";
             var lastPeerId = null;
             var peer = null; // Own peer object
             var peerId = null;
-            var sblocca = document.getElementById("sblocca");
+            var vinto = document.getElementById("vinto");
+            var perso = document.getElementById("perso");
             var stop = document.getElementById("stop");
             var vincitore = document.getElementById("vincitore");
+            var outputGrid = document.getElementById("outputGrid");
+            var sort = document.getElementById("sort");
+
+            var grid = {};
+            
 
             var currentStatus = 2;
             /*
@@ -59,13 +69,18 @@
                 });
                 peer.on('connection', function (c) {
                     c.on('data', function (data) {
+                        if (data == "test") {
+                            c.send("testok");
+                            return;
+                        }
                         if (currentStatus == 0) {
                             messages = [];
                             currentStatus = 1;
-                            stop.style.display = "block";
+                            stop.style.visibility = "visible";
                             setTimeout(function() {
                                 currentStatus = 2;
-                                sblocca.disabled = false;
+                                vinto.disabled = false;
+                                perso.disabled = false;
                                 var winner = null;
                                 for (var i=0; i<messages.length; i++) {
                                     if (winner == null || messages[i].tick < winner.tick) {
@@ -102,16 +117,58 @@
                 });
             };
 
-            sblocca.addEventListener('click', function () {
+            vinto.addEventListener('click', function () {
                 currentStatus = 0;
-                stop.style.display = "none";
-                sblocca.disabled = true;
+                stop.style.visibility = "hidden";
+                vinto.disabled = true;
+                perso.disabled = true;
+                addPoint(vincitore.value);
                 vincitore.value = "";
             });
+            perso.addEventListener('click', function () {
+                currentStatus = 0;
+                stop.style.visibility = "hidden";
+                vinto.disabled = true;
+                perso.disabled = true;
+                vincitore.value = "";
+            });
+            sort.addEventListener('change', function() {
+                renderGrid();
+            });
 
+
+            function addPoint(id) {                
+                addRemovePoint(id, 1);
+            }
+            function removePoint(id) {
+                addRemovePoint(id, -1);
+            }
+
+            function addRemovePoint(id, add) {
+                if (grid.hasOwnProperty(id)) {
+                    grid[id] += add;
+                } else {
+                    grid[id] = add;
+                }
+                renderGrid();
+            }
+
+            function renderGrid() {
+                var sortFlag = sort.checked;
+                var keysSorted = sortFlag ? Object.keys(grid).sort() : Object.keys(grid).sort(function(a,b){return grid[b]-grid[a]});
+                var htmlOutput = "<table>";
+                for (var i=0; i<keysSorted.length; i++) {
+                    var key = keysSorted[i];
+                    htmlOutput += "<tr><td>" + key + "</td><td>" + grid[key] + "</td><td><button onclick='removePoint(\"" + key + "\")'>-1</button></td><td><button onclick='addPoint(\"" + key + "\")'>+1</button></td></tr>";
+                      
+                }
+                htmlOutput += "</table>";
+                outputGrid.innerHTML = htmlOutput;
+            }
+
+            renderGrid();
             initialize();
 
-        })();
     </script>
 </body>
 

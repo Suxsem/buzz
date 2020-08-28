@@ -19,7 +19,8 @@
         <div style="color:burlywood; margin-top: 50px; font-size: x-small;">made by Suxsem</div>
     </div>
     <div id="game" style="text-align: center; display: none;">
-        <button type="button" id="sendButton" style="font-size: 5em; box-sizing: border-box; width: 100%; margin-top: 20px; height: 300px">BUZZ</button>
+        <button type="button" id="testButton" style="font-size: 2em; box-sizing: border-box; width: 100%; margin-top: 20px; height: 60px">TEST</button>
+        <button type="button" id="sendButton" style="background-color: red; font-size: 5em; box-sizing: border-box; width: 100%; margin-top: 20px; height: 300px">BUZZ</button>
     </div>
     <div id="reconnecting" style="text-align: center; display: none;">
         <div style="margin-top: 100px; font-size: larger;">Connettendo...</div>
@@ -39,6 +40,7 @@
             var message = document.getElementById("message");
             var myId = document.getElementById("myId");
             var sendButton = document.getElementById("sendButton");
+            var testButton = document.getElementById("testButton");
             var connectButton = document.getElementById("connect-button");
             var intro = document.getElementById("intro");
             var game = document.getElementById("game");
@@ -191,7 +193,9 @@
                 });
                 // Handle incoming data (messages only since this is the signal sender)
                 conn.on('data', function (data) {
-                    sendButton.disabled = false;
+                    if (data == "testok") {
+                        alert("RICEVUTO!");
+                    }
                 });
                 conn.on('close', function () {
                 });
@@ -208,6 +212,15 @@
                     setTimeout(function() {
                         sendButton.disabled = false;
                     }, 4000);
+                } else {
+                    console.log('Connection is closed');
+                }
+            });
+
+            testButton.addEventListener('click', function () {
+                if (conn && conn.open) {
+                    window.navigator.vibrate(300);
+                    conn.send("test");
                 } else {
                     console.log('Connection is closed');
                 }
